@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mitochondrial Primer Designer</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        input, select, button { padding: 0.5rem; margin-top: 1rem; width: 300px; }
+        .result { margin-top: 2rem; }
+        .copy-btn { margin-left: 10px; padding: 0.3rem 0.6rem; cursor: pointer; }
+        .warn { color: orange; font-size: 0.9em; }
+    </style>
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied: ' + text);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h2>Mitochondrial Primer Designer</h2>
+    <form method="POST">
+        <label>Type a name or choose from list:</label><br>
+        <input type="text" name="pathogen" placeholder="e.g. Mitochondrial DNA Haplotype"><br>
+        <label>or select known region:</label><br>
+        <select name="dropdown">
+            <option value="">-- Select Mitochondrial Target --</option>
+            <option value="HVR1">HVR1</option>
+            <option value="HVR2">HVR2</option>
+            <option value="CYTB">CYTB</option>
+            <option value="D-loop">D-loop</option>
+            <option value="12S rRNA">12S rRNA</option>
+        </select><br>
+        <button type="submit">Design Primers</button>
+    </form>
+
+    {% if primers %}
+    <div class="result">
+        <h3>Results:</h3>
+        {% for set in primers %}
+        <div style="margin-bottom: 1rem;">
+            <p><strong>Forward Primer:</strong> {{ set.forward }}
+                <button class="copy-btn" onclick="copyToClipboard('{{ set.forward }}')">Copy</button><br>
+                Tm: {{ set.forward_score.tm }}°C | GC%: {{ set.forward_score.gc }} | Score: {{ set.forward_score.score }}
+                {% for w in set.forward_score.warnings %}<div class="warn">⚠ {{ w }}</div>{% endfor %}
+            </p>
+            <p><strong>Reverse Primer:</strong> {{ set.reverse }}
+                <button class="copy-btn" onclick="copyToClipboard('{{ set.reverse }}')">Copy</button><br>
+                Tm: {{ set.reverse_score.tm }}°C | GC%: {{ set.reverse_score.gc }} | Score: {{ set.reverse_score.score }}
+                {% for w in set.reverse_score.warnings %}<div class="warn">⚠ {{ w }}</div>{% endfor %}
+            </p>
+            <p><strong>Probe (FAM):</strong> {{ set.probe }}
+                <button class="copy-btn" onclick="copyToClipboard('{{ set.probe }}')">Copy</button><br>
+                Tm: {{ set.probe_score.tm }}°C | GC%: {{ set.probe_score.gc }} | Score: {{ set.probe_score.score }}
+                {% for w in set.probe_score.warnings %}<div class="warn">⚠ {{ w }}</div>{% endfor %}
+            </p>
+        </div>
+        {% endfor %}
+        <form method="POST" action="/download">
+            <input type="hidden" name="query" value="{{ request.form.pathogen or request.form.dropdown }}">
+            <button type="submit">Download as CSV</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>
